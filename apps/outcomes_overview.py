@@ -117,6 +117,14 @@ layout = html.Div([
             )
         ], width=2)
     ], style={'margin-bottom': '40px'}),
+    dbc.Tooltip(
+        "Filter by date of outcome",
+        target="date-picker-range-overview"
+    ),
+    dbc.Tooltip(
+        "Set the KPIs to be displayed",
+        target="button-kpis"
+    ),
 
     # row for KPIs
     dbc.Row([

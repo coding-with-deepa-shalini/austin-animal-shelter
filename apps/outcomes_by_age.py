@@ -88,8 +88,12 @@ layout = html.Div([
         ], width=1)
     ], style={'margin-top': '50px'}),
     dbc.Tooltip(
-        "Bin age on outcome (months) " +
-        "into age groups (months)",
+        "Filter by date of outcome",
+        target="date-picker-range"
+    ),
+    dbc.Tooltip(
+        "Bin 'age on outcome (months)' " +
+        "into 'age groups (months)'",
         target="input-bins"
     ),
 

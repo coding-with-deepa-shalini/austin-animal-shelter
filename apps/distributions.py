@@ -78,6 +78,10 @@ layout = html.Div([
             )
         ], width=2)
     ]),
+    dbc.Tooltip(
+        "Filter by date of outcome",
+        target="date-picker-range"
+    ),
 
     # row for outcome selection
     dbc.Row([
