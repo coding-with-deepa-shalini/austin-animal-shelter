@@ -96,6 +96,10 @@ layout = html.Div([
         "into 'age groups (months)'",
         target="input-bins"
     ),
+    dbc.Tooltip(
+        "Select an outcome type",
+        target="dropdown-outcome-age"
+    ),
 
     # row for graphs and graph-specific filters
     dbc.Row([

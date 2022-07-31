@@ -63,6 +63,7 @@ layout = html.Div([
                 id="cfa-switch",
                 label="CFA breeds",
                 value=True,
+                inputClassName = None,
                 persistence=True, persistence_type="local"
             )
         ], width=2),
@@ -88,6 +89,14 @@ layout = html.Div([
         ])
     ])
 ])
+
+# callback to update change colour of Switch component to gray
+@app.callback(Output('cfa-switch', 'inputClassName'),
+            Input('cfa-switch', 'value'))
+def update_switch(activated):
+    if activated:
+        return 'bg-secondary',
+    return None
 
 @app.callback(Output("scatter-graph-breed", "figure"),
             [Input("date-picker-range", "start_date"),

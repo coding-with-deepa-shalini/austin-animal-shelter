@@ -120,7 +120,11 @@ layout = html.Div([
             ),
             dbc.Spinner(children=[dcc.Graph(id='bar-graph')], color='secondary')
         ])
-    ], style={'margin-top': '50px'})
+    ], style={'margin-top': '50px'}),
+    dbc.Tooltip(
+        "Select an outcome type",
+        target="dropdown-outcome-subtypes"
+    ),
 ])
 
 @app.callback(Output("sunburst-graph", "figure"),

@@ -95,6 +95,10 @@ layout = html.Div([
             )
         ])
     ], style={'margin-top': '50px'}),
+    dbc.Tooltip(
+        "Select an outcome type",
+        target="dropdown-outcome-dist"
+    ),
 
     # row for secondary dropdown menus for further filtering of histograms
     dbc.Row([
