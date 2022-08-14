@@ -1,14 +1,19 @@
 import os
+import dash
 import pandas as pd
-from dash import dcc
-from dash import html
+from dash import dcc, html, callback, Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 from dateutil.relativedelta import relativedelta
 
-from app import app
+dash.register_page(
+    __name__,
+    path='/outcomes-by-breed',
+    title="Outcomes by Breed",
+    name="Outcomes by Breed"
+)
 
 DATAPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data")
 
@@ -91,14 +96,14 @@ layout = html.Div([
 ])
 
 # callback to update change colour of Switch component to gray
-@app.callback(Output('cfa-switch', 'inputClassName'),
+@callback(Output('cfa-switch', 'inputClassName'),
             Input('cfa-switch', 'value'))
 def update_switch(activated):
     if activated:
         return 'bg-secondary',
     return None
 
-@app.callback(Output("scatter-graph-breed", "figure"),
+@callback(Output("scatter-graph-breed", "figure"),
             [Input("date-picker-range", "start_date"),
             Input("date-picker-range", "end_date"),
             Input("range-slider-age", "value"),

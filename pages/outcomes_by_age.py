@@ -1,14 +1,18 @@
 import os
+import dash
 import pandas as pd
-from dash import dcc
-from dash import html
+from dash import dcc, html, callback, Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
 from dateutil.relativedelta import relativedelta
 
-from app import app
+dash.register_page(
+    __name__,
+    path='/outcomes-by-age',
+    title="Outcomes by Age",
+    name="Outcomes by Age"
+)
 
 DATAPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data")
 
@@ -112,7 +116,7 @@ layout = html.Div([
     ], style={'margin-top': '10px'})
 ])
 
-@app.callback([Output("strip-graph-age", "figure"),
+@callback([Output("strip-graph-age", "figure"),
             Output("stacked-graph", "figure")],
             [Input("date-picker-range", "start_date"),
             Input("date-picker-range", "end_date"),

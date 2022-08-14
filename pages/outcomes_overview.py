@@ -1,14 +1,18 @@
 import os
+import dash
 import pandas as pd
-from dash import dcc
-from dash import html
+from dash import dcc, html, callback, Input, Output, State
 import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
 from dateutil.relativedelta import relativedelta
 
-from app import app
+dash.register_page(
+    __name__,
+    path='/outcomes-overview',
+    title="Outcomes",
+    name="Outcomes"
+)
 
 DATAPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data")
 
@@ -181,7 +185,7 @@ layout = html.Div([
     ], style={'margin-top': '40px'})
 ])
 
-@app.callback(Output("modal-kpis", "is_open"),
+@callback(Output("modal-kpis", "is_open"),
             [Input("button-kpis", "n_clicks")],
             [State("modal-kpis", "is_open")])
 def toggle_modal(n1, is_open):
@@ -189,7 +193,7 @@ def toggle_modal(n1, is_open):
         return not is_open
     return is_open
 
-@app.callback([Output("kpi1", "children"),
+@callback([Output("kpi1", "children"),
             Output("kpi2", "children"),
             Output("kpi3", "children"),
             Output("kpi1-title", "children"),
@@ -240,7 +244,7 @@ def update_adoptions_pie(start_date, end_date, slider_value, dropdown_kpi1, drop
 
     return str(kpi1_percentage) + "%", str(kpi2_percentage) + "%", str(kpi3_percentage) + "%", dropdown_kpi1, dropdown_kpi2, dropdown_kpi3
 
-@app.callback(Output("gross-outcomes", "figure"),
+@callback(Output("gross-outcomes", "figure"),
             [Input("date-picker-range-overview", "start_date"),
             Input("date-picker-range-overview", "end_date"),
             Input("range-slider", "value"),

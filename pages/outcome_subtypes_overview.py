@@ -1,14 +1,18 @@
 import os
+import dash
 import pandas as pd
-from dash import dcc
-from dash import html
+from dash import dcc, html, callback, Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
 from dateutil.relativedelta import relativedelta
 
-from app import app
+dash.register_page(
+    __name__,
+    path='/outcomes-subtypes-overview',
+    title="Outcome Subtypes",
+    name="Outcome Subtypes"
+)
 
 DATAPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data")
 
@@ -30,9 +34,19 @@ sexes = df['sex_upon_outcome'].unique().tolist()
 breeds = df['breed'].unique().tolist()
 outcomes = df['outcome_type'].unique().tolist()
 
-# third page content
+# sorting of stacked bar chart x-axis
+months_order = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+years = df['Year'].unique().tolist()
+years = sorted(years)
+
+sorted_month_year = list()
+for i in range(len(years)):
+    for j in range(len(months_order)):
+        sorted_month_year.append(months_order[j] + '-' + str(years[i]))
+
+# second page content
 layout = html.Div([
-    html.H3("Distributions"),
+    html.H3("Overview of Outcome Subtypes"),
     html.Hr(),
 
     # row for user-selections for graphs
@@ -83,63 +97,47 @@ layout = html.Div([
         target="date-picker-range"
     ),
 
-    # row for outcome selection
+    # row for graphs and graph-specific filters
     dbc.Row([
         dbc.Col([
+            dbc.Spinner(children=[dcc.Graph(id='sunburst-graph')], color='secondary')
+        ]),
+        dbc.Col([
             dcc.Dropdown(
-                id="dropdown-outcome-dist",
+                id="dropdown-outcome-subtypes",
                 options=outcomes,
                 value=outcomes[1],
                 clearable=False,
                 persistence=True, persistence_type="local"
-            )
+            ),
+            dbc.RadioItems(
+                id="radio-items-subtypes",
+                options=[
+                    {"label": "By day", "value": "Date"},
+                    {"label": "By month", "value": "Month_Year"},
+                    {"label": "By year", "value": "Year"}
+                ],
+                value="Month_Year",
+                inline=True,
+                inputCheckedClassName="border border-secondary bg-secondary",
+                persistence=True, persistence_type="local"
+            ),
+            dbc.Spinner(children=[dcc.Graph(id='bar-graph')], color='secondary')
         ])
     ], style={'margin-top': '50px'}),
     dbc.Tooltip(
         "Select an outcome type",
-        target="dropdown-outcome-dist"
+        target="dropdown-outcome-subtypes"
     ),
-
-    # row for secondary dropdown menus for further filtering of histograms
-    dbc.Row([
-        dbc.Col([
-            dcc.Dropdown(id="dropdown-col1", placeholder="Select weekday",
-            persistence=True, persistence_type="local")
-        ], width=4),
-        dbc.Col([
-            dcc.Dropdown(id="dropdown-col2", placeholder="Select month",
-            persistence=True, persistence_type="local")
-        ], width=4),
-        dbc.Col([
-            dcc.Dropdown(id="dropdown-col3", placeholder="Select year",
-            persistence=True, persistence_type="local")
-        ], width=4)
-    ], style={'margin-top': '20px'}),
-
-    # row for graphs
-    dbc.Row([
-        dbc.Col([
-            dbc.Spinner(children=[dcc.Graph(id='hist-hour')], color='secondary')
-        ], width=4),
-        dbc.Col([
-            dbc.Spinner(children=[dcc.Graph(id='hist-weekday')], color='secondary')
-        ], width=4),
-        dbc.Col([
-            dbc.Spinner(children=[dcc.Graph(id='hist-month')], color='secondary')
-        ], width=4)
-    ])
 ])
 
-@app.callback([Output("dropdown-col1", "options"),
-            Output("dropdown-col2", "options"),
-            Output("dropdown-col3", "options")],
+@callback(Output("sunburst-graph", "figure"),
             [Input("date-picker-range", "start_date"),
             Input("date-picker-range", "end_date"),
             Input("range-slider", "value"),
             Input("dropdown-sex", "value"),
-            Input("dropdown-breed", "value"),
-            Input("dropdown-outcome-dist", "value")])
-def update_secondary_dropdowns(start_date, end_date, slider_value, dropdown1_value, dropdown2_value, outcome_value):
+            Input("dropdown-breed", "value")])
+def update_sunburst(start_date, end_date, slider_value, dropdown1_value, dropdown2_value):
     # filter by slider selection
     final = df[(df['outcome_age_(months)'] >= slider_value[0]) & (df['outcome_age_(months)'] <= slider_value[1])]
 
@@ -154,28 +152,22 @@ def update_secondary_dropdowns(start_date, end_date, slider_value, dropdown1_val
 
     # create new groupby data table with appropriate values for sunburst chart
     final = final[(final['Date'] >= start_date) & (final['Date'] <= end_date)]
-    final = final[final['outcome_type'] == outcome_value]
+    final = pd.DataFrame(final.groupby(["outcome_type", "outcome_subtype"], as_index=False)["count"].count())
 
-    options1 = final['outcome_weekday'].unique().tolist()
-    options2 = final['outcome_month'].unique().tolist()
-    options3 = final['outcome_year'].unique().tolist()
+    fig = px.sunburst(final, path=['outcome_type', 'outcome_subtype'], values='count',
+        color_discrete_sequence=px.colors.qualitative.Bold)
 
-    return options1, sorted(options2), sorted(options3)
+    return fig
 
-
-@app.callback([Output("hist-hour", "figure"),
-            Output("hist-weekday", "figure"),
-            Output("hist-month", "figure")],
+@callback(Output("bar-graph", "figure"),
             [Input("date-picker-range", "start_date"),
             Input("date-picker-range", "end_date"),
             Input("range-slider", "value"),
             Input("dropdown-sex", "value"),
             Input("dropdown-breed", "value"),
-            Input("dropdown-outcome-dist", "value"),
-            Input("dropdown-col1", "value"),
-            Input("dropdown-col2", "value"),
-            Input("dropdown-col3", "value")])
-def update_histograms(start_date, end_date, slider_value, dropdown1_value, dropdown2_value, outcome_value, dropdown_col1, dropdown_col2, dropdown_col3):
+            Input("dropdown-outcome-subtypes", "value"),
+            Input("radio-items-subtypes", "value")])
+def update_bargraph(start_date, end_date, slider_value, dropdown1_value, dropdown2_value, outcome_value, radio_value):
     # filter by slider selection
     final = df[(df['outcome_age_(months)'] >= slider_value[0]) & (df['outcome_age_(months)'] <= slider_value[1])]
 
@@ -190,29 +182,11 @@ def update_histograms(start_date, end_date, slider_value, dropdown1_value, dropd
 
     # create new groupby data table with appropriate values for sunburst chart
     final = final[(final['Date'] >= start_date) & (final['Date'] <= end_date)]
+    final = pd.DataFrame(final.groupby([radio_value, "outcome_type", "outcome_subtype"], as_index=False)["count"].count())
     final = final[final['outcome_type'] == outcome_value]
 
-    # filter by user-selection in the secondary dropdowns
-    hours_df = final
-    weekdays_df = final
-    months_df = final
+    fig = px.bar(final, x=radio_value, y="count", color="outcome_subtype", color_discrete_sequence=px.colors.qualitative.Safe)
+    fig.update_layout({'plot_bgcolor': 'rgba(0, 0, 0, 0)', 'paper_bgcolor': 'rgba(0, 0, 0, 0)'})
+    fig.update_xaxes(categoryorder='array', categoryarray=sorted_month_year)
 
-    if (dropdown_col1 != None):
-        hours_df = final[final['outcome_weekday'] == dropdown_col1]
-
-    if (dropdown_col2 != None):
-        weekdays_df = final[final['outcome_month'] == dropdown_col2]
-
-    if (dropdown_col3 != None):
-        months_df = final[final['outcome_year'] == dropdown_col3]
-
-    hour = px.histogram(hours_df, x="outcome_hour", color="outcome_subtype", marginal="violin", title="Outcomes by hour of day")
-    hour.update_layout({'plot_bgcolor': 'rgba(0, 0, 0, 0)', 'paper_bgcolor': 'rgba(0, 0, 0, 0)'})
-
-    weekday = px.histogram(weekdays_df, x="outcome_weekday", color="outcome_subtype", marginal="violin", title="Outcomes by day of week")
-    weekday.update_layout({'plot_bgcolor': 'rgba(0, 0, 0, 0)', 'paper_bgcolor': 'rgba(0, 0, 0, 0)'})
-
-    month = px.histogram(months_df, x="outcome_month", color="outcome_subtype", marginal="violin", title="Outcomes by month of year")
-    month.update_layout({'plot_bgcolor': 'rgba(0, 0, 0, 0)', 'paper_bgcolor': 'rgba(0, 0, 0, 0)'})
-
-    return hour, weekday, month
+    return fig
