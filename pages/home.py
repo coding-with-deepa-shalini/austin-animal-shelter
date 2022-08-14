@@ -8,9 +8,6 @@ dash.register_page(
     __name__,
     path='/',
     title="Austin Animal Shelter",
-    description="This app is a submission to Plotly's Dash Summer Challenge to help raise awareness on pet adoptions and help the people" +
-        " working in the animal shelter better understand their data. Developed and maintained by Deepa Shalini Kalakonda",
-    image="assets/metatag-cat-image.png",
     name="Home"
 )
 
